@@ -118,6 +118,25 @@ module Spree
       credits.count
     end
 
+    def line_item_actionable?(order, line_item)
+      if eligible? order
+        rules = eligible_rules(order)
+        if rules.blank?
+          true
+        else
+          rules.send(match_all? ? :all? : :any?) do |rule|
+            rule.actionable? line_item
+          end
+        end
+      else
+        false
+      end
+    end
+
+    def used_by?(user, excluded_orders = [])
+      orders.where.not(id: excluded_orders.map(&:id)).complete.where(user_id: user.id).exists?
+    end
+
     private
     def normalize_blank_values
       [:code, :path].each do |column|
